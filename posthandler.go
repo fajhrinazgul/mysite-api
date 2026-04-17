@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"math"
 	"net/http"
+	"path/filepath"
 	"strconv"
 	"time"
 
@@ -130,6 +131,46 @@ func getAllPostHandler() gin.HandlerFunc {
 				"offset": offset,
 				"status": status,
 			},
+		})
+	}
+}
+
+func uploadImageHandler() gin.HandlerFunc {
+	return func(ctx *gin.Context) {
+		file, err := ctx.FormFile("image")
+		if err != nil {
+			ctx.JSON(http.StatusBadRequest, gin.H{"error": "File tidak ditemukan>"})
+			return
+		}
+
+		// validation format
+		extension := filepath.Ext(file.Filename)
+		if extension != ".jpg" && extension != ".png" && extension != ".jpeg" && extension != ".webp" {
+			ctx.JSON(http.StatusBadRequest, gin.H{
+				"status":  "error",
+				"message": "Format file not support",
+			})
+			return
+		}
+
+		fileName := fmt.Sprintf("%d%s", time.Now().UnixNano(), extension)
+		savePath := filepath.Join("uploads/posts", fileName)
+
+		// save file
+		if err := ctx.SaveUploadedFile(file, savePath); err != nil {
+			ctx.JSON(http.StatusInternalServerError, gin.H{
+				"status":  "error",
+				"message": "Failed to save file.",
+			})
+			return
+		}
+
+		fileURL := fmt.Sprintf("/%s", savePath)
+
+		ctx.JSON(http.StatusOK, gin.H{
+			"status":  "success",
+			"message": "Image upload successfully",
+			"url":     fileURL,
 		})
 	}
 }

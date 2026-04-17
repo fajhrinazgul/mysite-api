@@ -68,6 +68,7 @@ func handleServer() {
 	router := gin.Default()
 	router.SetTrustedProxies([]string{"127.0.0.1"})
 	router.Static("/media", "./media")
+	router.Static("/uploads", "./uploads")
 
 	c := cors.New(cors.Config{
 		AllowAllOrigins: true,
@@ -78,6 +79,7 @@ func handleServer() {
 	router.Use(c)
 
 	router.POST("/get-token", getTokenHandler())
+	router.POST("/uploads", uploadImageHandler())
 
 	postGroupWithAuth := router.Group("")
 	postGroupWithAuth.Use(authMiddleware())
