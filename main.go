@@ -79,9 +79,12 @@ func handleServer() {
 
 	router.POST("/get-token", getTokenHandler())
 
-	postGroupWithAuth := router.Group("/posts")
+	postGroupWithAuth := router.Group("")
 	postGroupWithAuth.Use(authMiddleware())
 	postControllerWithAuth(postGroupWithAuth)
+
+	postGroupNoAuth := router.Group("")
+	postControllerNoAuth(postGroupNoAuth)
 
 	router.Run(":8000")
 }
