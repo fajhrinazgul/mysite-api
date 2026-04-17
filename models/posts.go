@@ -23,6 +23,8 @@ type Post struct {
 
 type PostModel interface {
 	CreatePost(post *Post) error
+	GetAllPost() []Post
+	GetPagedPosts(status string, limit, offset int) ([]Post, int64, error)
 }
 
 type postModel struct{ db *gorm.DB }
@@ -31,4 +33,27 @@ func NewPostModel(db *gorm.DB) PostModel { return postModel{db: db} }
 
 func (p postModel) CreatePost(post *Post) error {
 	return p.db.Model(&Post{}).Create(post).Error
+}
+
+func (p postModel) GetAllPost() []Post {
+	var posts []Post
+	p.db.Model(&Post{}).Find(&posts)
+	return posts
+}
+
+func (p postModel) GetPagedPosts(status string, limit, offset int) ([]Post, int64, error) {
+	var posts []Post
+	var total int64
+
+	err := p.db.Model(&Post{}).Count(&total).Error
+	if err != nil {
+		return nil, 0, err
+	}
+
+	err = p.db.Limit(limit).Offset(offset).Order("created_at DESC").Where("status = ?", status).Find(&posts).Error
+	if err != nil {
+		return nil, 0, err
+	}
+
+	return posts, total, nil
 }
