@@ -60,11 +60,13 @@ func createPostHandler() gin.HandlerFunc {
 			})
 			return
 		}
+		fmt.Println(payload.IsFeatured)
 
 		post := models.Post{
-			Title:   payload.Title,
-			Content: payload.Content,
-			Status:  payload.Status,
+			Title:      payload.Title,
+			Content:    payload.Content,
+			Status:     payload.Status,
+			IsFeatured: payload.IsFeatured,
 			// Tags:    payload.Tags,
 		}
 		err = models.NewPostModel(models.GetDB()).CreatePost(&post)

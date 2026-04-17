@@ -10,7 +10,7 @@ import (
 type userAuth struct{}
 
 type credential struct {
-	UserID int `json:"user_id"`
+	UserID int64 `json:"user_id"`
 }
 
 type claims struct {
