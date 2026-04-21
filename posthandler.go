@@ -61,7 +61,6 @@ func createPostHandler() gin.HandlerFunc {
 			})
 			return
 		}
-		fmt.Println(payload.IsFeatured)
 
 		post := models.Post{
 			Title:      payload.Title,
@@ -97,6 +96,8 @@ func getAllPostHandler() gin.HandlerFunc {
 		page, _ := strconv.Atoi(ctx.DefaultQuery("page", "1"))
 		limit, _ := strconv.Atoi(ctx.DefaultQuery("limit", "10"))
 		status := ctx.DefaultQuery("status", "published")
+		// TODO: orderBy and DESC
+		// orderBy := ctx.DefaultQuery("orderBy", "created_at")
 
 		offset := (page - 1) * limit
 
@@ -146,6 +147,14 @@ func postDetailHandler() gin.HandlerFunc {
 			ctx.JSON(http.StatusNotFound, gin.H{
 				"status":  "error",
 				"message": "Post not found.",
+			})
+			return
+		}
+		post.View += 1
+		if err = models.GetDB().Save(&post).Error; err != nil {
+			ctx.JSON(http.StatusInternalServerError, gin.H{
+				"status":  "error",
+				"message": err.Error(),
 			})
 			return
 		}

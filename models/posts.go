@@ -24,6 +24,7 @@ type Post struct {
 	IsFeatured  bool      `gorm:"default:false" json:"is_featured"`
 	Status      string    `gorm:"size:9;default:drafted" json:"status"`
 	ReadingTime string    `gorm:"size:20" json:"reading_time"`
+	View        uint      `gorm:"default:0" json:"view"`
 	UpdatedAt   time.Time `gorm:"autoUpdateTime:nano" json:"updated_at"`
 	CreatedAt   time.Time `gorm:"autoCreateTime" json:"created_at"`
 	Tags        []Tag     `gorm:"many2many:post_tags" json:"tags"`
