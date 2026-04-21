@@ -279,13 +279,6 @@ func postEditHandler() gin.HandlerFunc {
 			})
 			return
 		}
-		if err != nil {
-			ctx.JSON(http.StatusBadRequest, gin.H{
-				"status":  "error",
-				"message": err.Error(),
-			})
-			return
-		}
 
 		duration := time.Since(start)
 
