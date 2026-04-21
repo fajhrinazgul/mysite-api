@@ -81,6 +81,7 @@ type PostModel interface {
 	CreatePost(post *Post) error
 	GetAllPost() []Post
 	GetPagedPosts(status string, limit, offset int) ([]Post, int64, error)
+	GetPostBySlug(slug string) (Post, error)
 }
 
 type postModel struct{ db *gorm.DB }
@@ -112,4 +113,10 @@ func (p postModel) GetPagedPosts(status string, limit, offset int) ([]Post, int6
 	}
 
 	return posts, total, nil
+}
+
+func (p postModel) GetPostBySlug(slug string) (Post, error) {
+	var post Post
+	err := p.db.Model(&Post{}).Where("slug = ?", slug).First(&post).Error
+	return post, err
 }

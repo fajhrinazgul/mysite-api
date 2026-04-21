@@ -84,12 +84,13 @@ func createPostHandler() gin.HandlerFunc {
 		ctx.JSON(http.StatusCreated, gin.H{
 			"status":         "success",
 			"message":        "success create new post",
-			"post":           post,
+			"data":           post,
 			"execution_time": float64(duration.Microseconds()) / 1000,
 		})
 	}
 }
 
+// getAllPostHandler
 func getAllPostHandler() gin.HandlerFunc {
 	return func(ctx *gin.Context) {
 		start := time.Now()
@@ -135,6 +136,32 @@ func getAllPostHandler() gin.HandlerFunc {
 	}
 }
 
+// postDetailHandler
+func postDetailHandler() gin.HandlerFunc {
+	return func(ctx *gin.Context) {
+		start := time.Now()
+		slug := ctx.Param("slug")
+		post, err := models.NewPostModel(models.GetDB()).GetPostBySlug(slug)
+		if err != nil {
+			ctx.JSON(http.StatusNotFound, gin.H{
+				"status":  "error",
+				"message": "Post not found.",
+			})
+			return
+		}
+
+		duration := time.Since(start)
+
+		ctx.JSON(http.StatusOK, gin.H{
+			"status":         "success",
+			"message":        "",
+			"execution_time": float64(duration.Microseconds()) / 1000,
+			"data":           post,
+		})
+	}
+}
+
+// uploadImageHandler
 func uploadImageHandler() gin.HandlerFunc {
 	return func(ctx *gin.Context) {
 		file, err := ctx.FormFile("image")
@@ -172,5 +199,136 @@ func uploadImageHandler() gin.HandlerFunc {
 			"message": "Image upload successfully",
 			"url":     fileURL,
 		})
+	}
+}
+
+// function for edit
+func postEditHandler() gin.HandlerFunc {
+	return func(ctx *gin.Context) {
+		start := time.Now()
+
+		slugQuery := ctx.Param("slug")
+
+		postInstance, err := models.NewPostModel(models.GetDB()).GetPostBySlug(slugQuery)
+		if err != nil {
+			ctx.JSON(http.StatusNotFound, nil)
+			return
+		}
+
+		_, err = getUserContext(ctx.Request)
+		if err != nil {
+			ctx.JSON(http.StatusUnauthorized, gin.H{
+				"status":  "unauthorized",
+				"message": "you not logged as a admin.",
+			})
+			return
+		}
+
+		var payload PostEditPayload
+		err = ctx.ShouldBindJSON(&payload)
+		if err != nil {
+			ctx.JSON(http.StatusBadRequest, gin.H{
+				"status":  "error",
+				"message": err.Error(),
+			})
+			return
+		}
+
+		validate = validator.New(validator.WithRequiredStructEnabled())
+		err = validate.Struct(payload)
+		if err != nil {
+			if _, ok := err.(*validator.InvalidValidationError); ok {
+				fmt.Println(err.Error())
+				return
+			}
+
+			var validations []Validation
+
+			for _, err := range err.(validator.ValidationErrors) {
+				validations = append(validations, Validation{
+					Field: err.Field(),
+					Tag:   err.Tag(),
+				})
+			}
+
+			ctx.JSON(http.StatusBadRequest, gin.H{
+				"status":  "error",
+				"message": "validation error",
+				"errors":  validations,
+			})
+			return
+		}
+		// fmt.Println(payload.IsFeatured)
+
+		if payload.Title != nil {
+			postInstance.Title = *payload.Title
+		}
+		if payload.Content != nil {
+			postInstance.Content = *payload.Content
+		}
+		if payload.Status != nil {
+			postInstance.Status = *payload.Status
+		}
+		if payload.IsFeatured != nil {
+			postInstance.IsFeatured = *payload.IsFeatured
+		}
+		if err := models.GetDB().Save(&postInstance).Error; err != nil {
+			ctx.JSON(http.StatusBadRequest, gin.H{
+				"status":  "error",
+				"message": err.Error(),
+			})
+			return
+		}
+		if err != nil {
+			ctx.JSON(http.StatusBadRequest, gin.H{
+				"status":  "error",
+				"message": err.Error(),
+			})
+			return
+		}
+
+		duration := time.Since(start)
+
+		ctx.JSON(http.StatusOK, gin.H{
+			"status":         "success",
+			"message":        "success update post",
+			"data":           postInstance,
+			"execution_time": float64(duration.Microseconds()) / 1000,
+		})
+	}
+}
+
+// deletePostHandler
+func deletePostHandler() gin.HandlerFunc {
+	return func(ctx *gin.Context) {
+		_, err := getUserContext(ctx.Request)
+		if err != nil {
+			ctx.JSON(http.StatusUnauthorized, gin.H{
+				"status":  "error",
+				"message": "Permission danied",
+			})
+			return
+		}
+
+		slug := ctx.Param("slug")
+
+		post, err := models.NewPostModel(models.GetDB()).GetPostBySlug(slug)
+		if err != nil {
+			ctx.JSON(http.StatusNotFound, gin.H{
+				"status":  "error",
+				"message": "Post not found",
+			})
+			return
+		}
+
+		if err = models.GetDB().Delete(&post).Error; err != nil {
+			ctx.JSON(http.StatusInternalServerError, gin.H{
+				"status":  "error",
+				"message": err.Error(),
+			})
+			return
+		}
+
+		ctx.JSON(http.StatusNoContent, nil)
 	}
 }
