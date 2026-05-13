@@ -1,0 +1,6 @@
+mysite-api
+*.exe
+mysite-api.exe
+db.sqlite
+db.sqlite3
+uploads/
