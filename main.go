@@ -63,7 +63,7 @@ func handleCreateSuperuser() {
 }
 
 func handleServer() {
-	gin.SetMode(gin.ReleaseMode)
+	gin.SetMode(gin.DebugMode)
 
 	router := gin.Default()
 	router.SetTrustedProxies([]string{"127.0.0.1"})
@@ -78,15 +78,15 @@ func handleServer() {
 
 	router.Use(c)
 
-	router.POST("/get-token", getTokenHandler())
-	router.POST("/uploads", uploadImageHandler())
+	router.POST("/api/get-token", getTokenHandler())
+	router.POST("/api/uploads", uploadImageHandler())
 
-	postGroupWithAuth := router.Group("")
+	postGroupWithAuth := router.Group("/api/")
 	postGroupWithAuth.Use(authMiddleware())
 	postControllerWithAuth(postGroupWithAuth)
 
-	postGroupNoAuth := router.Group("")
+	postGroupNoAuth := router.Group("/api/")
 	postControllerNoAuth(postGroupNoAuth)
 
-	router.Run("127.0.0.1:8000")
+	router.Run(":8000")
 }
